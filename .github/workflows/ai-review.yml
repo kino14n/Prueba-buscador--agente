@@ -1,6 +1,8 @@
-name: 🛠️ AI Code Review
+name: 🚀 Revisión AI Automática
 on:
-  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   review:
@@ -8,29 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Obtener diff
-        id: diff
-        run: echo "::set-output name=diff::$(git diff origin/main)"
-
-      - name: Llamar a ChatGPT para revisar
-        run: |
-          curl https://api.openai.com/v1/chat/completions \
-            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "model": "gpt-4o-mini",
-              "messages": [
-                {"role":"system","content":"Eres un asistente que revisa código."},
-                {"role":"user","content":"Revisa este diff y comenta mejoras:\n'"${{ steps.diff.outputs.diff }}"'"}
-              ]
-            }' \
-          | jq -r '.choices[].message.content' > review.md
-
-      - name: Crear comentario en el PR
-        uses: peter-evans/create-or-update-comment@v4
+      - name: AI Code Review
+        uses: paambaati/code-review-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ### 💡 Sugerencias de tu agente AI
-            $(cat review.md)
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          model: gpt-4o-mini
